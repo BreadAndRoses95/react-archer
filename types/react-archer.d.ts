@@ -25,6 +25,8 @@ export interface ArcherContainerProps {
   svgContainerStyle?: React.CSSProperties;
 
   className?: string;
+
+  shouldUseWindowHref?: boolean;
 }
 
 export const ArcherContainer: React.ComponentType<ArcherContainerProps>;
