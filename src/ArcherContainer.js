@@ -15,6 +15,7 @@ type Props = {
   style?: Object,
   svgContainerStyle?: Object,
   className?: string,
+  shouldUseWindowHref?: Boolean,
 };
 
 type SourceToTargetsArrayType = Array<SourceToTargetType>;
@@ -27,7 +28,7 @@ type State = {
     [string]: HTMLElement,
   },
   sourceToTargetsMap: {
-    [string]: SourceToTargetsArrayType
+    [string]: SourceToTargetsArrayType,
   },
   observer: ResizeObserver,
   parent: ?HTMLElement,
@@ -166,11 +167,14 @@ export class ArcherContainer extends React.Component<Props, State> {
     return absolutePosition.substract(parentCoordinates);
   };
 
-  registerTransitions = (elementId: string, newSourceToTargets: Array<SourceToTargetType>): void => {
+  registerTransitions = (
+    elementId: string,
+    newSourceToTargets: Array<SourceToTargetType>,
+  ): void => {
     this.setState((prevState: State) => ({
       sourceToTargetsMap: {
         ...prevState.sourceToTargetsMap,
-        [elementId]: newSourceToTargets
+        [elementId]: newSourceToTargets,
       },
     }));
   };
@@ -207,7 +211,9 @@ export class ArcherContainer extends React.Component<Props, State> {
     const { sourceToTargetsMap } = this.state;
 
     // Object.values is unavailable in IE11
-    const jaggedSourceToTargets: JaggedSourceToTargetsArrayType = Object.keys(sourceToTargetsMap).map((key: string) => sourceToTargetsMap[key]);
+    const jaggedSourceToTargets: JaggedSourceToTargetsArrayType = Object.keys(
+      sourceToTargetsMap,
+    ).map((key: string) => sourceToTargetsMap[key]);
 
     // Flatten
     return [].concat.apply([], jaggedSourceToTargets);
@@ -216,56 +222,65 @@ export class ArcherContainer extends React.Component<Props, State> {
   computeArrows = (): React$Node => {
     const parentCoordinates = this.getParentCoordinates();
 
-    return this.getSourceToTargets().map(({ source, target, label, style }: SourceToTargetType) => {
-      const strokeColor =
-        (style && style.strokeColor) || this.props.strokeColor;
+    return this.getSourceToTargets().map(
+      ({ source, target, label, style }: SourceToTargetType) => {
+        const strokeColor =
+          (style && style.strokeColor) || this.props.strokeColor;
 
-      const arrowLength =
-        (style && style.arrowLength) || this.props.arrowLength;
+        const arrowLength =
+          (style && style.arrowLength) || this.props.arrowLength;
 
-      const strokeWidth =
-        (style && style.strokeWidth) || this.props.strokeWidth;
+        const strokeWidth =
+          (style && style.strokeWidth) || this.props.strokeWidth;
 
-      const arrowThickness =
-        (style && style.arrowThickness) || this.props.arrowThickness;
+        const arrowThickness =
+          (style && style.arrowThickness) || this.props.arrowThickness;
 
-      const startingAnchor = source.anchor;
-      const startingPoint = this.getPointCoordinatesFromAnchorPosition(
-        source.anchor,
-        source.id,
-        parentCoordinates,
-      );
+        const shouldUseWindowHref =
+          Boolean(this.props.shouldUseWindowHref) || false;
 
-      const endingAnchor = target.anchor;
-      const endingPoint = this.getPointCoordinatesFromAnchorPosition(
-        target.anchor,
-        target.id,
-        parentCoordinates,
-      );
+        const startingAnchor = source.anchor;
+        const startingPoint = this.getPointCoordinatesFromAnchorPosition(
+          source.anchor,
+          source.id,
+          parentCoordinates,
+        );
 
-      return (
-        <SvgArrow
-          key={JSON.stringify({ source, target })}
-          startingPoint={startingPoint}
-          startingAnchor={startingAnchor}
-          endingPoint={endingPoint}
-          endingAnchor={endingAnchor}
-          strokeColor={strokeColor}
-          arrowLength={arrowLength}
-          strokeWidth={strokeWidth}
-          arrowLabel={label}
-          arrowThickness={arrowThickness}
-          arrowMarkerId={this.getMarkerId(source, target)}
-        />
-      );
-    });
+        const endingAnchor = target.anchor;
+        const endingPoint = this.getPointCoordinatesFromAnchorPosition(
+          target.anchor,
+          target.id,
+          parentCoordinates,
+        );
+
+        return (
+          <SvgArrow
+            key={JSON.stringify({ source, target })}
+            startingPoint={startingPoint}
+            startingAnchor={startingAnchor}
+            endingPoint={endingPoint}
+            endingAnchor={endingAnchor}
+            strokeColor={strokeColor}
+            arrowLength={arrowLength}
+            strokeWidth={strokeWidth}
+            arrowLabel={label}
+            arrowThickness={arrowThickness}
+            arrowMarkerId={this.getMarkerId(source, target)}
+            shouldUseWindowHref={shouldUseWindowHref}
+          />
+        );
+      },
+    );
   };
 
   /** Generates an id for an arrow marker
    * Useful to have one marker per arrow so that each arrow
    * can have a different color!
    * */
-  getMarkerId = (source: EntityRelationType, target: EntityRelationType): string => {
+  getMarkerId = (
+    source: EntityRelationType,
+    target: EntityRelationType,
+  ): string => {
     return `${this.arrowMarkerUniquePrefix}${source.id}${target.id}`;
   };
 
@@ -274,35 +289,36 @@ export class ArcherContainer extends React.Component<Props, State> {
    * a different color or size
    * */
   generateAllArrowMarkers = (): React$Node => {
-    return this.getSourceToTargets().map(({ source, target, label, style }: SourceToTargetType) => {
+    return this.getSourceToTargets().map(
+      ({ source, target, label, style }: SourceToTargetType) => {
+        const strokeColor =
+          (style && style.strokeColor) || this.props.strokeColor;
 
-      const strokeColor =
-        (style && style.strokeColor) || this.props.strokeColor;
+        const arrowLength =
+          (style && style.arrowLength) || this.props.arrowLength;
 
-      const arrowLength =
-        (style && style.arrowLength) || this.props.arrowLength;
+        const arrowThickness =
+          (style && style.arrowThickness) || this.props.arrowThickness;
 
-      const arrowThickness =
-        (style && style.arrowThickness) || this.props.arrowThickness;
+        const arrowPath = `M0,0 L0,${arrowThickness} L${arrowLength -
+          1},${arrowThickness / 2} z`;
 
-      const arrowPath = `M0,0 L0,${arrowThickness} L${arrowLength -
-        1},${arrowThickness / 2} z`;
-
-      return (
-        <marker
-          id={this.getMarkerId(source, target)}
-          key={this.getMarkerId(source, target)}
-          markerWidth={arrowLength}
-          markerHeight={arrowThickness}
-          refX="0"
-          refY={arrowThickness / 2}
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d={arrowPath} fill={strokeColor} />
-        </marker>
-      );
-    });
+        return (
+          <marker
+            id={this.getMarkerId(source, target)}
+            key={this.getMarkerId(source, target)}
+            markerWidth={arrowLength}
+            markerHeight={arrowThickness}
+            refX="0"
+            refY={arrowThickness / 2}
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d={arrowPath} fill={strokeColor} />
+          </marker>
+        );
+      },
+    );
   };
 
   svgContainerStyle = () => ({
@@ -331,7 +347,9 @@ export class ArcherContainer extends React.Component<Props, State> {
             {SvgArrows}
           </svg>
 
-          <div style={{ height: '100%' }} ref={this.storeParent}>{this.props.children}</div>
+          <div style={{ height: '100%' }} ref={this.storeParent}>
+            {this.props.children}
+          </div>
         </div>
       </ArcherContainerContextProvider>
     );

@@ -13,6 +13,7 @@ type Props = {
   strokeWidth: number,
   arrowLabel?: ?React$Node,
   arrowMarkerId: string,
+  shouldUseWindowHref?: boolean,
 };
 
 function computeEndingArrowDirectionVector(endingAnchor) {
@@ -123,6 +124,7 @@ const SvgArrow = ({
   strokeWidth,
   arrowLabel,
   arrowMarkerId,
+  shouldUseWindowHref,
 }: Props) => {
   const actualArrowLength = arrowLength * 2;
 
@@ -166,10 +168,18 @@ const SvgArrow = ({
       <path
         d={pathString}
         style={{ fill: 'none', stroke: strokeColor, strokeWidth }}
-        markerEnd={`url(${location.href}#${arrowMarkerId})`}
+        markerEnd={`url(${
+          shouldUseWindowHref ? location.href : ''
+        }#${arrowMarkerId})`}
       />
       {arrowLabel && (
-        <foreignObject x={xl} y={yl} width={wl} height={hl} style={{overflow:'visible'}}>
+        <foreignObject
+          x={xl}
+          y={yl}
+          width={wl}
+          height={hl}
+          style={{ overflow: 'visible' }}
+        >
           <div
             style={{
               width: wl,
